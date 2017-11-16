@@ -689,6 +689,38 @@ class PostgresqlBackendImpl(BackendImpl):
                 ), dname=ident)
 
 
+@BackendImpl.impl.dispatch_for("cockroachdb")
+class CockroachDBBackendImpl(BackendImpl):
+    def create_opportunistic_driver_url(self):
+        return "cockroachdb://root:@localhost:26257/"
+
+    def drop_additional_objects(self, conn):
+	pass
+
+    def database_exists(self, engine, ident):
+        return bool(
+            engine.scalar(
+                sqlalchemy.text(
+                    "SELECT \"Database\" FROM [SHOW DATABASES] "
+                    "WHERE \"Database\"=:name"), name=ident)
+            )
+
+    def create_named_database(self, engine, ident, conditional=False):
+        with engine.connect().execution_options(
+                isolation_level="AUTOCOMMIT") as conn:
+            if not conditional or not self.database_exists(conn, ident):
+                conn.execute("CREATE DATABASE %s" % ident)
+
+    def drop_named_database(self, engine, ident, conditional=False):
+        with engine.connect().execution_options(
+                isolation_level="AUTOCOMMIT") as conn:
+            self._close_out_database_users(conn, ident)
+            if conditional:
+                conn.execute("DROP DATABASE IF EXISTS %s" % ident)
+            else:
+                conn.execute("DROP DATABASE %s" % ident)
+
+
 def _random_ident():
     return ''.join(
         random.choice(string.ascii_lowercase)
