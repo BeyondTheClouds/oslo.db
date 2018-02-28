@@ -18,7 +18,6 @@ import sys
 
 from sqlalchemy import event
 from sqlalchemy import exc as sqla_exc
-
 from oslo_db import exception
 
 
@@ -63,7 +62,8 @@ def filters(dbname, exception_type, regex):
 @filters("mysql", sqla_exc.InternalError, r"^.*\b1213\b.*Deadlock found.*")
 @filters("mysql", sqla_exc.InternalError,
          r"^.*\b1213\b.*detected deadlock/conflict.*")
-@filters("cockroachdb", sqla_exc.OperationalError, r"^.*retry txn.*")
+@filters("cockroachdb", sqla_exc.OperationalError, (r"^.*retry txn.*",
+  r"^.*restart transaction.*"))
 @filters("postgresql", sqla_exc.OperationalError, r"^.*deadlock detected.*")
 @filters("postgresql", sqla_exc.DBAPIError, r"^.*deadlock detected.*")
 @filters("ibm_db_sa", sqla_exc.DBAPIError, r"^.*SQL0911N.*")
