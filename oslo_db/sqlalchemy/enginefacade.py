@@ -633,6 +633,8 @@ class _TransactionContext(object):
                 bind=self.connection, mode=self.mode)
             try:
                 self.session.begin()
+                if self.session.bind.dialect.name == 'cockroachdb':
+                    self.session.execute('SET TRANSACTION ISOLATION LEVEL SNAPSHOT')
                 with self._add_context(self.session, context):
                     yield self.session
                 self._end_session_transaction(self.session)
