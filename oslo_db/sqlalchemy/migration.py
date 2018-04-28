@@ -47,9 +47,10 @@ from migrate.versioning.repository import Repository
 import sqlalchemy
 
 from oslo_db._i18n import _
-from oslo_db import exception
+from oslo_db import (api, exception)
 
 
+@api.wrap_db_retry(retry_on_deadlock=True)
 def db_sync(engine, abs_path, version=None, init_version=0, sanity_check=True):
     """Upgrade or downgrade a database.
 
